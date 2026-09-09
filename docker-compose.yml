@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  # Banco de Dados Relacional da Clearing B3
+  postgres:
+    image: postgres:16-alpine
+    container_name: b3_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: b3_trading
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Cache em Memória de Baixa Latência (Cotações & Posições)
+  redis:
+    image: redis:7-alpine
+    container_name: b3_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # Mensageria de Liquidação de Ordens (AMQP)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: b3_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"       # Protocolo AMQP para a aplicação
+      - "15672:15672"     # Painel Web do RabbitMQ (Login: guest / guest)
+
+volumes:
+  postgres_data:
