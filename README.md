@@ -40,23 +40,40 @@ O sistema atua como o backend de pós-negociação para operações executadas n
 
 ---
 
-## 🚀 Caminho do Avaliador (Como Rodar e Testar)
+## 📑 Endpoints da API (Swagger / OpenAPI)
+
+A API expõe contratos RESTful documentados para integração direta com frontends e sistemas de mercado:
+
+| Método | Rota | Descrição |
+| :--- | :--- | :--- |
+| `POST` | `/api/trades` | Submete uma nova ordem de compra/venda para validação e liquidação |
+| `GET` | `/api/trades` | Lista o histórico consolidado de operações de pós-negociação |
+| `GET` | `/api/trades/{id}` | Consulta detalhes, status de execução e data de liquidação de um trade |
+| `GET` | `/api/trades/account/{accountId}` | Extrato analítico de operações por conta de custódia |
+
+---
+
+## 🚀 Como Executar Localmente
+
+Caso queira executar a infraestrutura e a aplicação na sua máquina local:
 
 ### 1. Subir a Infraestrutura (PostgreSQL + Redis + RabbitMQ)
-Com o Docker aberto, execute na raiz do projeto:
+Com o Docker aberto, execute na raiz do repositório:
 ```bash
 docker compose up -d
 ```
-- **PostgreSQL:** `localhost:5432`
-- **Redis:** `localhost:6379`
-- **RabbitMQ Dashboard:** [http://localhost:15672](http://localhost:15672) *(Login: `guest` / `guest`)*
+> **Serviços provisionados:**
+> - **PostgreSQL:** `localhost:5432` *(Database: `b3_trading`)*
+> - **Redis:** `localhost:6379`
+> - **RabbitMQ Dashboard:** `http://localhost:15672` *(Credenciais: `guest` / `guest`)*
 
 ### 2. Rodar a API .NET 8
 ```bash
 dotnet run --project src/B3.TradingCore.Api/B3.TradingCore.Api.csproj
 ```
-Acesse a documentação interativa do Swagger:
-👉 **[http://localhost:5000](http://localhost:5000)** ou **[https://localhost:5001](https://localhost:5001)**
+
+Após iniciar a API, acesse a documentação interativa no navegador da sua máquina:
+- **Swagger UI:** `http://localhost:5000` *(ou `https://localhost:5001`)*
 
 ---
 
@@ -107,4 +124,6 @@ curl -X POST "http://localhost:5000/api/trades" \
 
 ## ⚖️ Licença
 
-Distribuído sob a licença MIT. Desenvolvido por **João Paulo Gregório de Souza** | **Vortex Software LTDA**.
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais detalhes.
+
+Desenvolvido por **João Paulo Gregório de Souza** | **Vortex Software LTDA**.
