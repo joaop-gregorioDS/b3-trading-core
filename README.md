@@ -1,8 +1,10 @@
-# B3 TradingCore
+# B3 TradingCore · Vortex Labs
 
-Protótipo de portfólio de uma API de negociação e pós-negociação, desenvolvido em **C# e .NET 8**. O projeto demonstra organização em camadas, validação de regras de domínio, persistência de operações e publicação de eventos.
+Motor institucional de pós-negociação e liquidação de ordens da B3 em **C# e .NET 8** com Clean Architecture, PostgreSQL, Redis e RabbitMQ. Projeto integrado ao ecossistema de inovação **Vortex Labs**.
 
-> **Escopo:** este projeto é uma simulação técnica e não está publicado on-line. Não é um sistema da B3, não se conecta à bolsa ou a corretoras e não realiza negociação, clearing ou liquidação reais.
+🌐 **Swagger OpenAPI Interativo Online:** [https://b3.vortexsoftware.tech](https://b3.vortexsoftware.tech)
+
+> **Escopo:** Este projeto é uma simulação técnica institucional para demonstração de engenharia de software de alta performance. Não é um sistema oficial da B3 S.A. nem se conecta diretamente ao pregão em tempo real.
 
 ## O que a aplicação demonstra
 

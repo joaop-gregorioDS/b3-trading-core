@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # 1. API ASP.NET Core 8.0 - B3 TradingCore (Vortex Labs)
+  b3-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: b3_trading_api
+    restart: always
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=b3-postgres;Port=5432;Database=b3_trading;Username=b3user;Password=b3securepassword2026
+      - ConnectionStrings__Redis=b3-redis:6379
+      - RabbitMQ__HostName=b3-rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__UserName=b3user
+      - RabbitMQ__Password=b3securepassword2026
+      - ASPNETCORE_URLS=http://+:5000
+      - ASPNETCORE_ENVIRONMENT=Production
+    ports:
+      # Exposição exclusiva no loopback local para encaminhamento seguro pelo Nginx Host
+      - "127.0.0.1:5050:5000"
+    depends_on:
+      - b3-postgres
+      - b3-redis
+      - b3-rabbitmq
+    networks:
+      - b3_network
+
+  # 2. Banco de Dados Relacional - Trades & Posições (PostgreSQL 16)
+  b3-postgres:
+    image: postgres:16-alpine
+    container_name: b3_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: b3_trading
+      POSTGRES_USER: b3user
+      POSTGRES_PASSWORD: b3securepassword2026
+    volumes:
+      - b3_postgres_data:/var/lib/postgresql/data
+    networks:
+      - b3_network
+
+  # 3. Cache em Memória de Baixa Latência - Cotações em Tempo Real (Redis 7)
+  b3-redis:
+    image: redis:7-alpine
+    container_name: b3_redis
+    restart: always
+    volumes:
+      - b3_redis_data:/data
+    networks:
+      - b3_network
+
+  # 4. Mensageria e Eventos de Liquidação B3 (RabbitMQ 3)
+  b3-rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: b3_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: b3user
+      RABBITMQ_DEFAULT_PASS: b3securepassword2026
+    volumes:
+      - b3_rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - b3_network
+
+networks:
+  b3_network:
+    driver: bridge
+
+volumes:
+  b3_postgres_data:
+  b3_redis_data:
+  b3_rabbitmq_data:
