@@ -30,6 +30,6 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 EXPOSE 5000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:5000/swagger/index.html || exit 1
+  CMD curl -f http://localhost:5000/swagger/v1/swagger.json || exit 1
 
 ENTRYPOINT ["dotnet", "B3.TradingCore.Api.dll"]
