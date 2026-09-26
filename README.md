@@ -2,7 +2,7 @@
 
 Protótipo de portfólio de uma API de negociação e pós-negociação, desenvolvido em **C# e .NET 8**. O projeto demonstra organização em camadas, validação de regras de domínio, persistência de operações e publicação de eventos.
 
-> **Escopo:** este projeto é uma simulação técnica. Não é um sistema da B3, não se conecta à bolsa ou a corretoras e não realiza negociação, clearing ou liquidação reais.
+> **Escopo:** este projeto é uma simulação técnica e não está publicado on-line. Não é um sistema da B3, não se conecta à bolsa ou a corretoras e não realiza negociação, clearing ou liquidação reais.
 
 ## O que a aplicação demonstra
 
