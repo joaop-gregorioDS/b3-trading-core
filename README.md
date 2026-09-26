@@ -1,129 +1,91 @@
-# B3.TradingCore 📈
+# B3 TradingCore
 
-Motor corporativo de **Pós-Negociação, Liquidação e Clearing de Ordens da B3** em **C# / .NET 8**, construído sob os princípios de **Clean Architecture**, **SOLID** e mensageria distribuída.
+Protótipo de portfólio de uma API de negociação e pós-negociação, desenvolvido em **C# e .NET 8**. O projeto demonstra organização em camadas, validação de regras de domínio, persistência de operações e publicação de eventos.
 
-[![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4.svg?style=flat-square&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![C#](https://img.shields.io/badge/C%23-12.0-239120.svg?style=flat-square&logo=c-sharp&logoColor=white)](https://docs.microsoft.com/dotnet/csharp/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192.svg?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
-[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600.svg?style=flat-square&logo=rabbitmq&logoColor=white)](https://www.rabbitmq.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+> **Escopo:** este projeto é uma simulação técnica. Não é um sistema da B3, não se conecta à bolsa ou a corretoras e não realiza negociação, clearing ou liquidação reais.
 
----
+## O que a aplicação demonstra
 
-## 🏛️ Visão Geral da Arquitetura
+- Receber e validar operações de compra e venda por uma API REST.
+- Calcular valor total a partir de preço e quantidade.
+- Persistir operações no PostgreSQL usando Entity Framework Core.
+- Consultar trades por identificador e por conta.
+- Manter cotação recente e volume diário no Redis.
+- Publicar `TradeExecutedEvent` no RabbitMQ para processamento desacoplado.
+- Expor documentação interativa com Swagger/OpenAPI.
 
-O sistema atua como o backend de pós-negociação para operações executadas no pregão da B3 (Ações à vista, Mini Índice e Mini Dólar):
+## Arquitetura
 
-```
-       [ Client / Simulador ]
-                 │ (HTTP / JSON)
-                 ▼
-       ┌─────────────────────┐
-       │   B3.TradingCore    │ (ASP.NET Core Web API .NET 8)
-       └──────────┬──────────┘
-                  │
-        ┌─────────┼─────────┐
-        │         │         │
-        ▼         ▼         ▼
-  ┌──────────┐ ┌─────┐ ┌──────────┐
-  │PostgreSQL│ │Redis│ │ RabbitMQ │
-  │ (Trans.) │ │(Cot)│ │(Clearing)│
-  └──────────┘ └─────┘ └──────────┘
+```text
+Client / Swagger
+      │ HTTP + JSON
+      ▼
+ASP.NET Core API ─── Application Services
+                         │
+          ┌──────────────┼─────────────┐
+          ▼              ▼             ▼
+      PostgreSQL       Redis       RabbitMQ
+      (EF Core)         cache       producer
 ```
 
-1. **Entrada de Ordens:** Recebe operações de compra/venda (`POST /api/trades`).
-2. **Domínio B3:** Valida regras de mercado e calcula automaticamente a data de liquidação da Clearing (**D+2** para ações, **D+1** para derivativos).
-3. **Persistência Transacional:** Grava o trade no **PostgreSQL** com precisão decimal (`18,2`).
-4. **Cache em Memória:** Atualiza a cotação recente e acumula o volume financeiro diário no **Redis**.
-5. **Mensageria Assíncrona:** Publica o evento `TradeExecutedEvent` na exchange do **RabbitMQ** para processamento desacoplado pela câmara de compensação.
+- `B3.TradingCore.Domain`: entidade `Trade`, enums e contrato de repositório.
+- `B3.TradingCore.Application`: serviço de aplicação, DTOs e interfaces.
+- `B3.TradingCore.Infrastructure`: persistência, cache e produtor RabbitMQ.
+- `B3.TradingCore.Api`: controllers, Swagger e injeção de dependências.
 
----
+## Tecnologias
 
-## 📑 Endpoints da API (Swagger / OpenAPI)
+`C# 12` · `.NET 8` · `ASP.NET Core` · `Entity Framework Core` · `PostgreSQL 16` · `Redis 7` · `RabbitMQ 3` · `Docker Compose`
 
-A API expõe contratos RESTful documentados para integração direta com frontends e sistemas de mercado:
+## Endpoints disponíveis
 
 | Método | Rota | Descrição |
-| :--- | :--- | :--- |
-| `POST` | `/api/trades` | Submete uma nova ordem de compra/venda para validação e liquidação |
-| `GET` | `/api/trades` | Lista o histórico consolidado de operações de pós-negociação |
-| `GET` | `/api/trades/{id}` | Consulta detalhes, status de execução e data de liquidação de um trade |
-| `GET` | `/api/trades/account/{accountId}` | Extrato analítico de operações por conta de custódia |
+|---|---|---|
+| `POST` | `/api/trades` | Valida, persiste e publica um evento para o trade. |
+| `GET` | `/api/trades/{id}` | Consulta um trade pelo UUID. |
+| `GET` | `/api/trades/account/{accountId}` | Lista trades de uma conta. |
+| `GET` | `/api/trades/quote/{ticker}` | Consulta a cotação recente disponível no cache. |
 
----
+O Swagger abre na raiz da API, normalmente em `http://localhost:5000` ou `https://localhost:5001`.
 
-## 🚀 Como Executar Localmente
+### Exemplo de criação
 
-Caso queira executar a infraestrutura e a aplicação na sua máquina local:
-
-### 1. Subir a Infraestrutura (PostgreSQL + Redis + RabbitMQ)
-Com o Docker aberto, execute na raiz do repositório:
-```bash
-docker compose up -d
-```
-> **Serviços provisionados:**
-> - **PostgreSQL:** `localhost:5432` *(Database: `b3_trading`)*
-> - **Redis:** `localhost:6379`
-> - **RabbitMQ Dashboard:** `http://localhost:15672` *(Credenciais: `guest` / `guest`)*
-
-### 2. Rodar a API .NET 8
-```bash
-dotnet run --project src/B3.TradingCore.Api/B3.TradingCore.Api.csproj
-```
-
-Após iniciar a API, acesse a documentação interativa no navegador da sua máquina:
-- **Swagger UI:** `http://localhost:5000` *(ou `https://localhost:5001`)*
-
----
-
-## 🧪 Exemplo de Requisição (Compra de Ações B3)
-
-Execute via Swagger ou cURL:
-
-```bash
-curl -X POST "http://localhost:5000/api/trades" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "accountId": "CC-98765-BTG",
-       "ticker": "PETR4",
-       "marketType": "Equities",
-       "side": "Buy",
-       "price": 38.50,
-       "quantity": 100
-     }'
-```
-
-**Resposta (201 Created):**
 ```json
 {
-  "id": "e7b0c95a-4712-4f8a-a82f-2d8c3653198e",
   "accountId": "CC-98765-BTG",
   "ticker": "PETR4",
   "marketType": "Equities",
   "side": "Buy",
   "price": 38.50,
-  "quantity": 100,
-  "totalAmount": 3850.00,
-  "status": "Executed",
-  "executedAt": "2026-09-09T10:55:00Z",
-  "settlementDate": "2026-09-11T10:55:00Z"
+  "quantity": 100
 }
 ```
 
----
+## Executar localmente
 
-## 📂 Estrutura de Camadas (Clean Architecture)
+Pré-requisitos: Docker Compose e .NET 8 SDK.
 
-- **`src/B3.TradingCore.Domain`:** Entidades puras (`Trade`), Enums (`OrderSide`, `MarketType`, `TradeStatus`) e Contratos de repositório. Zero dependências externas.
-- **`src/B3.TradingCore.Application`:** Casos de uso (`TradingService`), DTOs imutáveis (`CreateTradeRequest`, `TradeResponse`) e interfaces de mensageria e cache.
-- **`src/B3.TradingCore.Infrastructure`:** Implementações concretas de banco (`Entity Framework Core` + `PostgreSQL`), Cache (`StackExchange.Redis`) e Mensageria (`RabbitMQ.Client`).
-- **`src/B3.TradingCore.Api`:** Controllers REST, documentação Swagger/OpenAPI e injeção de dependências.
+1. Inicie PostgreSQL, Redis e RabbitMQ:
 
----
+   ```bash
+   docker compose up -d
+   ```
 
-## ⚖️ Licença
+2. Inicie a API:
 
-Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais detalhes.
+   ```bash
+   dotnet run --project src/B3.TradingCore.Api/B3.TradingCore.Api.csproj
+   ```
 
-Desenvolvido por **João Paulo Gregório de Souza** | **Vortex Software LTDA**.
+O Compose local usa credenciais de desenvolvimento definidas no próprio arquivo; não reutilize essa configuração em um ambiente público.
+
+## Limites atuais do protótipo
+
+- O cálculo de `SettlementDate` soma dias corridos (`AddDays`); calendário de feriados e dias úteis não está implementado.
+- O serviço publica no RabbitMQ, mas este repositório não inclui um consumidor de Clearing.
+- Não há idempotência de criação nem pipeline de testes automatizados versionado neste repositório.
+- O Redis e o RabbitMQ têm caminhos de fallback para execução quando os serviços não estão disponíveis; isso serve à demonstração, não define garantias de produção.
+
+## Licença
+
+MIT. Consulte [`LICENSE`](LICENSE).
